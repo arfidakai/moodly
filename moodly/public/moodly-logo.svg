@@ -1,0 +1,37 @@
+<svg width="400" height="400" viewBox="0 0 400 400" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- Background gradient -->
+  <defs>
+    <linearGradient id="bgGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#A8D5D8;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#B8A8D8;stop-opacity:1" />
+    </linearGradient>
+  </defs>
+  
+  <!-- Background -->
+  <rect width="400" height="400" fill="url(#bgGradient)" rx="40"/>
+  
+  <!-- Wave icon -->
+  <g transform="translate(200, 150)">
+    <!-- Upper wave -->
+    <path d="M-60,-20 Q-40,-35 -20,-20 Q0,-5 20,-20 Q40,-35 60,-20" 
+          stroke="white" 
+          stroke-width="8" 
+          fill="none" 
+          stroke-linecap="round"/>
+    
+    <!-- Lower wave -->
+    <path d="M-60,10 Q-40,-5 -20,10 Q0,25 20,10 Q40,-5 60,10" 
+          stroke="white" 
+          stroke-width="8" 
+          fill="none" 
+          stroke-linecap="round"/>
+  </g>
+  
+  <!-- Text "moodly" -->
+  <text x="200" y="280" 
+        font-family="Arial, sans-serif" 
+        font-size="72" 
+        font-weight="bold" 
+        fill="white" 
+        text-anchor="middle">moodly</text>
+</svg>
