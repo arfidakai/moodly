@@ -2,20 +2,22 @@
   "name": "moodly",
   "private": true,
   "version": "0.0.0",
-  "homepage": "https://arfidakai.github.io/moodly",  
+  "homepage": "https://arfidakai.github.io/moodly",
   "type": "module",
   "scripts": {
     "dev": "vite",
     "build": "vite build",
     "lint": "eslint . --ext js,jsx --report-unused-disable-directives --max-warnings 0",
     "preview": "vite preview",
-    "predeploy": "npm run build",      
-    "deploy": "gh-pages -d dist"     
+    "predeploy": "npm run build",
+    "deploy": "gh-pages -d dist"
   },
   "dependencies": {
+    "firebase": "^12.7.0",
     "lucide-react": "^0.562.0",
     "react": "^19.2.0",
-    "react-dom": "^19.2.0"
+    "react-dom": "^19.2.0",
+    "react-router-dom": "^7.11.0"
   },
   "devDependencies": {
     "@eslint/js": "^9.39.1",
