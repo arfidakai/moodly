@@ -4,6 +4,7 @@ import { useAuth } from '../context/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import { collection, addDoc, query, where, orderBy, onSnapshot, deleteDoc, doc } from 'firebase/firestore';
 import { db } from '../firebase';
+import AIBot from '../components/AIBot';
 
 // Mood options configuration
 const MOODS = [
@@ -12,6 +13,9 @@ const MOODS = [
   { emoji: '😔', label: 'Sad', color: 'bg-indigo-100 border-indigo-200' },
   { emoji: '😴', label: 'Tired', color: 'bg-slate-100 border-slate-200' },
   { emoji: '😡', label: 'Angry', color: 'bg-red-100 border-red-200' },
+  { emoji: '😰', label: 'Anxious', color: 'bg-yellow-100 border-yellow-200' },
+  { emoji: '🤗', label: 'Grateful', color: 'bg-pink-100 border-pink-200' },
+  { emoji: '😎', label: 'Confident', color: 'bg-cyan-100 border-cyan-200' },
 ];
 
 const MoodTracker = () => {
@@ -21,6 +25,8 @@ const MoodTracker = () => {
   const [selectedMood, setSelectedMood] = useState(null);
   const [note, setNote] = useState('');
   const [loading, setLoading] = useState(false);
+  const [showAI, setShowAI] = useState(false);
+  const [showAIPrompt, setShowAIPrompt] = useState(false);
 
   // --- Effects ---
   useEffect(() => {
@@ -45,6 +51,10 @@ const MoodTracker = () => {
   }, [currentUser]);
 
   // --- Handlers ---
+  const handleMoodSelect = (mood) => {
+    setSelectedMood(mood);
+  };
+
   const handleSave = async () => {
     if (!selectedMood || !currentUser) return;
 
@@ -68,6 +78,11 @@ const MoodTracker = () => {
           minute: '2-digit' 
         })
       });
+
+      // Trigger AI prompt setelah berhasil save jika mood Sad atau Tired
+      if (selectedMood.label === 'Sad' || selectedMood.label === 'Tired') {
+        setShowAIPrompt(true);
+      }
 
       // Reset form
       setNote('');
@@ -101,25 +116,90 @@ const MoodTracker = () => {
   return (
     <div className="min-h-screen py-10 px-4 flex justify-center">
       <div className="w-full max-w-md space-y-8">
-        
-        {/* Header */}
+        {/* Modal Ajakan Konsultasi AI */}
+        {showAIPrompt && (
+          <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+            <div className="bg-white rounded-3xl p-6 max-w-sm w-full shadow-xl space-y-4">
+              <div className="text-center">
+                <div className="inline-block p-3 bg-purple-100 rounded-full mb-3">
+                  <Sparkles className="w-6 h-6 text-purple-500" />
+                </div>
+                <h3 className="text-xl font-bold text-slate-700 mb-2">
+                  Terlihat kamu sedang {selectedMood?.label === 'Sad' ? 'sedih' : 'lelah'}...
+                </h3>
+                <p className="text-slate-500 text-sm">
+                  Mau cerita ke AI Assistant? Kami siap mendengarkan dan memberikan dukungan.
+                </p>
+              </div>
+              
+              <div className="flex gap-3">
+                <button
+                  onClick={() => {
+                    setShowAIPrompt(false);
+                    setShowAI(false);
+                  }}
+                  className="flex-1 py-3 rounded-xl border-2 border-slate-200 text-slate-600 font-semibold hover:bg-slate-50 transition-colors"
+                >
+                  Nanti Aja
+                </button>
+                <button
+                  onClick={() => {
+                    setShowAIPrompt(false);
+                    setShowAI(true);
+                  }}
+                  className="flex-1 py-3 rounded-xl bg-indigo-400 hover:bg-indigo-500 text-white font-semibold shadow-lg shadow-indigo-200 transition-colors"
+                >
+                  Ya, Konsul
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Modal AI Assistant - muncul setelah user pilih "Ya, Konsul" */}
+        {showAI && (
+          <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4 overflow-y-auto">
+            <div className="bg-white rounded-3xl p-6 max-w-lg w-full shadow-xl my-8">
+              <div className="flex justify-between items-start mb-4">
+                <div>
+                  <h2 className="text-2xl font-bold text-indigo-500 flex items-center gap-2">
+                    <span role="img" aria-label="ai">🤖</span> Moodly AI Assistant
+                  </h2>
+                  <p className="text-slate-500 text-sm mt-1">Tanya apa saja ke AI, atau minta saran/motivasi!</p>
+                </div>
+                <button
+                  onClick={() => setShowAI(false)}
+                  className="text-slate-400 hover:text-slate-600 text-2xl leading-none"
+                >
+                  ×
+                </button>
+              </div>
+              <AIBot />
+            </div>
+          </div>
+        )}
+
+
+        {/* Header + Logout button in top right */}
         <header className="text-center space-y-2 relative">
           <div className="inline-block p-3 bg-white rounded-full shadow-sm mb-2">
             <Sparkles className="w-6 h-6 text-purple-400" />
           </div>
           <h1 className="text-4xl font-bold text-slate-700 tracking-tight">Moodly</h1>
           <p className="text-slate-400 text-sm">How are you feeling today?</p>
-          
-          {/* User info and logout */}
-          <div className="absolute top-0 right-0 flex items-center gap-2">
-            <span className="text-xs text-slate-400">{currentUser?.email}</span>
+          {/* Logout button in top right */}
+          <div className="absolute top-2 right-2 group">
             <button
               onClick={handleLogout}
-              className="p-2 hover:bg-red-50 rounded-full transition-colors group"
+              className="p-2 bg-red-50 hover:bg-red-100 rounded-full transition-colors"
               title="Logout"
             >
-              <LogOut className="w-4 h-4 text-slate-400 group-hover:text-red-500" />
+              <LogOut className="w-5 h-5 text-red-400 group-hover:text-red-500" />
             </button>
+            {/* Email appears on hover */}
+            <span className="absolute right-12 top-1 bg-white px-3 py-1 rounded shadow text-xs text-slate-600 font-medium opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap">
+              {currentUser?.email}
+            </span>
           </div>
         </header>
 
@@ -129,13 +209,13 @@ const MoodTracker = () => {
           {/* Mood Selector */}
           <div>
             <label className="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-3">Select Mood</label>
-            <div className="flex justify-between gap-2">
+            <div className="flex gap-2 overflow-x-auto pb-2 hide-scrollbar">
               {MOODS.map((m) => (
                 <button
                   key={m.label}
-                  onClick={() => setSelectedMood(m)}
+                  onClick={() => handleMoodSelect(m)}
                   className={`
-                    flex flex-col items-center justify-center p-3 rounded-2xl w-full transition-all duration-200
+                    flex flex-col items-center justify-center min-w-[64px] p-3 rounded-2xl transition-all duration-200
                     ${selectedMood?.label === m.label 
                       ? `${m.color} scale-105 shadow-sm border-2` 
                       : 'bg-slate-50 border-2 border-transparent hover:bg-slate-100'}
