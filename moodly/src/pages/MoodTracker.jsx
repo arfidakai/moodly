@@ -79,14 +79,14 @@ const MoodTracker = () => {
         })
       });
 
-      // Trigger AI prompt setelah berhasil save jika mood Sad atau Tired
-      if (selectedMood.label === 'Sad' || selectedMood.label === 'Tired') {
-        setShowAIPrompt(true);
-      }
+      // Langsung tampilkan refleksi tanpa popup konfirmasi
+      setShowAI(true);
 
-      // Reset form
-      setNote('');
-      setSelectedMood(null);
+      // Reset form setelah delay agar modal muncul dulu
+      setTimeout(() => {
+        setNote('');
+        setSelectedMood(null);
+      }, 100);
     } catch (error) {
       console.error('Error saving mood entry:', error);
       alert('Failed to save entry. Please try again.');
@@ -125,10 +125,12 @@ const MoodTracker = () => {
                   <Sparkles className="w-6 h-6 text-purple-500" />
                 </div>
                 <h3 className="text-xl font-bold text-slate-700 mb-2">
-                  Terlihat kamu sedang {selectedMood?.label === 'Sad' ? 'sedih' : 'lelah'}...
+                  {selectedMood?.label === 'Sad' || selectedMood?.label === 'Tired' || selectedMood?.label === 'Anxious' || selectedMood?.label === 'Angry'
+                    ? 'Yuk, semangat! 💪'
+                    : 'Mantap! Tetap jaga energi positifmu! ✨'}
                 </h3>
                 <p className="text-slate-500 text-sm">
-                  Mau cerita ke AI Assistant? Kami siap mendengarkan dan memberikan dukungan.
+                  Dapatkan kata-kata refleksi untuk menemanimu hari ini
                 </p>
               </div>
               
@@ -149,32 +151,36 @@ const MoodTracker = () => {
                   }}
                   className="flex-1 py-3 rounded-xl bg-indigo-400 hover:bg-indigo-500 text-white font-semibold shadow-lg shadow-indigo-200 transition-colors"
                 >
-                  Ya, Konsul
+                  Lihat Refleksi
                 </button>
               </div>
             </div>
           </div>
         )}
 
-        {/* Modal AI Assistant - muncul setelah user pilih "Ya, Konsul" */}
+        {/* Modal Refleksi - mobile friendly */}
         {showAI && (
-          <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4 overflow-y-auto">
-            <div className="bg-white rounded-3xl p-6 max-w-lg w-full shadow-xl my-8">
-              <div className="flex justify-between items-start mb-4">
-                <div>
-                  <h2 className="text-2xl font-bold text-indigo-500 flex items-center gap-2">
-                    <span role="img" aria-label="ai">🤖</span> Moodly AI Assistant
-                  </h2>
-                  <p className="text-slate-500 text-sm mt-1">Tanya apa saja ke AI, atau minta saran/motivasi!</p>
+          <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+            <div className="bg-white rounded-3xl w-full max-w-md shadow-xl max-h-[85vh] overflow-y-auto">
+              <div className="sticky top-0 bg-white rounded-t-3xl px-6 pt-5 pb-4 border-b border-gray-100">
+                <div className="flex justify-between items-start">
+                  <div>
+                    <h2 className="text-2xl font-bold text-indigo-500 flex items-center gap-2">
+                      <span role="img" aria-label="sparkle">✨</span> Refleksi Harian
+                    </h2>
+                    {/* <p className="text-slate-500 text-sm mt-1">Katax-kata inspiratif untuk menemanimu hari ini</p> */}
+                  </div>
+                  <button
+                    onClick={() => setShowAI(false)}
+                    className="text-slate-400 hover:text-slate-600 text-3xl leading-none -mt-1"
+                  >
+                    ×
+                  </button>
                 </div>
-                <button
-                  onClick={() => setShowAI(false)}
-                  className="text-slate-400 hover:text-slate-600 text-2xl leading-none"
-                >
-                  ×
-                </button>
               </div>
-              <AIBot />
+              <div className="px-6 py-5">
+                <AIBot mood={selectedMood?.label} />
+              </div>
             </div>
           </div>
         )}
