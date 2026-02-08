@@ -27,6 +27,7 @@ const MoodTracker = () => {
   const [loading, setLoading] = useState(false);
   const [showAI, setShowAI] = useState(false);
   const [showAIPrompt, setShowAIPrompt] = useState(false);
+  const [showAllEntries, setShowAllEntries] = useState(false);
 
   // --- Effects ---
   useEffect(() => {
@@ -266,41 +267,55 @@ const MoodTracker = () => {
               <p>No entries yet. Start your journal above!</p>
             </div>
           ) : (
-            entries.map((entry) => (
-              <div 
-                key={entry.id} 
-                className="group bg-white p-5 rounded-2xl shadow-sm border border-slate-50 hover:shadow-md transition-all duration-300 flex flex-col gap-3 relative overflow-hidden"
-              >
-                {/* Decorative side bar based on mood color */}
-                <div className={`absolute left-0 top-0 bottom-0 w-1.5 ${entry.mood.color.split(' ')[0]}`}></div>
-                
-                <div className="flex justify-between items-start pl-3">
-                  <div className="flex items-center gap-3">
-                    <span className="text-3xl bg-slate-50 p-2 rounded-xl">{entry.mood.emoji}</span>
-                    <div>
-                      <h3 className="font-bold text-slate-700">{entry.mood.label}</h3>
-                      <div className="flex items-center text-xs text-slate-400 gap-1">
-                        <Calendar className="w-3 h-3" />
-                        {entry.date}
+            <>
+              {(showAllEntries ? entries : entries.slice(0, 4)).map((entry) => (
+                <div 
+                  key={entry.id} 
+                  className="group bg-white p-5 rounded-2xl shadow-sm border border-slate-50 hover:shadow-md transition-all duration-300 flex flex-col gap-3 relative overflow-hidden"
+                >
+                  {/* Decorative side bar based on mood color */}
+                  <div className={`absolute left-0 top-0 bottom-0 w-1.5 ${entry.mood.color.split(' ')[0]}`}></div>
+                  
+                  <div className="flex justify-between items-start pl-3">
+                    <div className="flex items-center gap-3">
+                      <span className="text-3xl bg-slate-50 p-2 rounded-xl">{entry.mood.emoji}</span>
+                      <div>
+                        <h3 className="font-bold text-slate-700">{entry.mood.label}</h3>
+                        <div className="flex items-center text-xs text-slate-400 gap-1">
+                          <Calendar className="w-3 h-3" />
+                          {entry.date}
+                        </div>
                       </div>
                     </div>
+                    
+                    <button 
+                      onClick={() => handleDelete(entry.id)}
+                      className="text-slate-300 hover:text-red-400 transition-colors p-2"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </button>
                   </div>
-                  
-                  <button 
-                    onClick={() => handleDelete(entry.id)}
-                    className="text-slate-300 hover:text-red-400 transition-colors p-2"
+
+                  {entry.note && (
+                    <p className="text-slate-600 text-sm leading-relaxed pl-3 pt-2 border-t border-slate-50 mt-1">
+                      {entry.note}
+                    </p>
+                  )}
+                </div>
+              ))}
+              
+              {/* Button Lihat Lainnya */}
+              {entries.length > 4 && (
+                <div className="text-center pt-2">
+                  <button
+                    onClick={() => setShowAllEntries(!showAllEntries)}
+                    className="px-6 py-3 bg-indigo-50 hover:bg-indigo-100 text-indigo-500 font-semibold rounded-xl transition-colors duration-200 text-sm"
                   >
-                    <Trash2 className="w-4 h-4" />
+                    {showAllEntries ? 'Lihat Lebih Sedikit' : `Lihat Lainnya (${entries.length - 4} lagi)`}
                   </button>
                 </div>
-
-                {entry.note && (
-                  <p className="text-slate-600 text-sm leading-relaxed pl-3 pt-2 border-t border-slate-50 mt-1">
-                    {entry.note}
-                  </p>
-                )}
-              </div>
-            ))
+              )}
+            </>
           )}
         </div>
 
