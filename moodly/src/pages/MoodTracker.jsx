@@ -27,7 +27,48 @@ const MoodTracker = () => {
   const [loading, setLoading] = useState(false);
   const [showAI, setShowAI] = useState(false);
   const [showAIPrompt, setShowAIPrompt] = useState(false);
+
   const [showAllEntries, setShowAllEntries] = useState(false);
+
+  // Statistik: Mood terbanyak bulan ini
+  const [topMood, setTopMood] = useState(null);
+
+  useEffect(() => {
+    // Hitung mood terbanyak bulan ini
+    if (!entries || entries.length === 0) {
+      setTopMood(null);
+      return;
+    }
+    const now = new Date();
+    const thisMonth = now.getMonth();
+    const thisYear = now.getFullYear();
+    // Filter entries bulan ini
+    const monthlyEntries = entries.filter(e => {
+      const t = e.timestamp?.toDate ? e.timestamp.toDate() : new Date(e.timestamp);
+      return t.getMonth() === thisMonth && t.getFullYear() === thisYear;
+    });
+    if (monthlyEntries.length === 0) {
+      setTopMood(null);
+      return;
+    }
+    // Hitung frekuensi mood
+    const freq = {};
+    monthlyEntries.forEach(e => {
+      const label = e.mood?.label;
+      if (label) freq[label] = (freq[label] || 0) + 1;
+    });
+    // Cari mood terbanyak
+    let max = 0, maxLabel = null;
+    Object.entries(freq).forEach(([label, count]) => {
+      if (count > max) {
+        max = count;
+        maxLabel = label;
+      }
+    });
+    // Cari emoji
+    const moodObj = MOODS.find(m => m.label === maxLabel);
+    setTopMood(moodObj ? { ...moodObj, count: max } : null);
+  }, [entries]);
 
   // --- Effects ---
   useEffect(() => {
@@ -259,6 +300,15 @@ const MoodTracker = () => {
             {loading ? 'SAVING...' : 'LOG ENTRY'}
           </button>
         </div>
+
+        {/* Statistik Mood Bulan Ini */}
+        {topMood && (
+          <div className="mb-4 px-4 py-3 rounded-xl bg-indigo-50 border border-indigo-100 flex items-center gap-3 text-indigo-700 text-sm font-semibold">
+            <span className="text-2xl">{topMood.emoji}</span>
+            Mood terbanyak bulan ini: <span className="ml-1 font-bold">{topMood.label}</span>
+            <span className="ml-2 text-xs text-indigo-400">({topMood.count}x)</span>
+          </div>
+        )}
 
         {/* Entries Feed */}
         <div className="space-y-4">
