@@ -30,11 +30,9 @@ const MoodTracker = () => {
 
   const [showAllEntries, setShowAllEntries] = useState(false);
 
-  // Statistik: Mood terbanyak bulan ini
   const [topMood, setTopMood] = useState(null);
 
   useEffect(() => {
-    // Hitung mood terbanyak bulan ini
     if (!entries || entries.length === 0) {
       setTopMood(null);
       return;
@@ -42,7 +40,6 @@ const MoodTracker = () => {
     const now = new Date();
     const thisMonth = now.getMonth();
     const thisYear = now.getFullYear();
-    // Filter entries bulan ini
     const monthlyEntries = entries.filter(e => {
       const t = e.timestamp?.toDate ? e.timestamp.toDate() : new Date(e.timestamp);
       return t.getMonth() === thisMonth && t.getFullYear() === thisYear;
@@ -51,13 +48,11 @@ const MoodTracker = () => {
       setTopMood(null);
       return;
     }
-    // Hitung frekuensi mood
     const freq = {};
     monthlyEntries.forEach(e => {
       const label = e.mood?.label;
       if (label) freq[label] = (freq[label] || 0) + 1;
     });
-    // Cari mood terbanyak
     let max = 0, maxLabel = null;
     Object.entries(freq).forEach(([label, count]) => {
       if (count > max) {
@@ -65,7 +60,6 @@ const MoodTracker = () => {
         maxLabel = label;
       }
     });
-    // Cari emoji
     const moodObj = MOODS.find(m => m.label === maxLabel);
     setTopMood(moodObj ? { ...moodObj, count: max } : null);
   }, [entries]);
@@ -137,12 +131,26 @@ const MoodTracker = () => {
     }
   };
 
+  const [deleteId, setDeleteId] = useState(null);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [deleting, setDeleting] = useState(false);
+
   const handleDelete = async (id) => {
+    setDeleteId(id);
+    setShowDeleteModal(true);
+  };
+
+  const confirmDelete = async () => {
+    if (!deleteId) return;
+    setDeleting(true);
     try {
-      await deleteDoc(doc(db, 'moodEntries', id));
+      await deleteDoc(doc(db, 'moodEntries', deleteId));
+      setShowDeleteModal(false);
+      setDeleteId(null);
     } catch (error) {
-      console.error('Error deleting entry:', error);
       alert('Failed to delete entry. Please try again.');
+    } finally {
+      setDeleting(false);
     }
   };
 
@@ -158,6 +166,41 @@ const MoodTracker = () => {
   return (
     <div className="min-h-screen py-10 px-4 flex justify-center">
       <div className="w-full max-w-md space-y-8">
+        {/* Modal Konfirmasi Hapus */}
+        {showDeleteModal && (
+          <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+            <div className="bg-white dark:bg-slate-800 rounded-3xl p-6 max-w-sm w-full shadow-xl space-y-4">
+              <div className="text-center">
+                <div className="inline-block p-3 bg-red-100 rounded-full mb-3">
+                  <Trash2 className="w-6 h-6 text-red-500" />
+                </div>
+                <h3 className="text-xl font-bold text-slate-700 dark:text-slate-100 mb-2">
+                  Hapus Entry?
+                </h3>
+                <p className="text-slate-500 dark:text-slate-300 text-sm">
+                  Entry mood ini akan dihapus permanen. Lanjutkan?
+                </p>
+              </div>
+              <div className="flex gap-3">
+                <button
+                  onClick={() => setShowDeleteModal(false)}
+                  className="flex-1 py-3 rounded-xl border-2 border-slate-200 dark:border-slate-600 text-slate-600 dark:text-slate-200 font-semibold hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors"
+                  disabled={deleting}
+                >
+                  Batal
+                </button>
+                <button
+                  onClick={confirmDelete}
+                  className="flex-1 py-3 rounded-xl bg-red-400 hover:bg-red-500 text-white font-semibold shadow-lg shadow-red-200 transition-colors"
+                  disabled={deleting}
+                >
+                  {deleting ? 'Menghapus...' : 'Hapus'}
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
         {/* Modal Ajakan Konsultasi AI */}
         {showAIPrompt && (
           <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">

@@ -18,6 +18,45 @@ body {
   font-family: var(--font-sans);
 }
 
+.dark body {
+  background-color: #18181b;
+  color: #e5e7eb;
+}
+.dark .bg-white {
+  background-color: #23272f !important;
+}
+.dark .text-slate-700, .dark .text-slate-600 {
+  color: #e5e7eb !important;
+}
+.dark .border-slate-50, .dark .border-slate-100 {
+  border-color: #2d2f36 !important;
+}
+.dark .bg-slate-50 {
+  background-color: #23272f !important;
+}
+.dark .bg-indigo-50 {
+  background-color: #312e81 !important;
+  color: #c7d2fe !important;
+}
+.dark .bg-red-50 {
+  background-color: #7f1d1d !important;
+}
+.dark .bg-indigo-400 {
+  background-color: #6366f1 !important;
+}
+.dark .bg-indigo-500 {
+  background-color: #4f46e5 !important;
+}
+.dark .text-indigo-500 {
+  color: #a5b4fc !important;
+}
+.dark .text-indigo-700 {
+  color: #c7d2fe !important;
+}
+.dark .shadow {
+  box-shadow: 0 2px 8px #0006 !important;
+}
+
 /* Custom scrollbar for a cleaner look */
 ::-webkit-scrollbar {
   width: 8px;
