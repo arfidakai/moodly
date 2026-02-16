@@ -7,7 +7,7 @@ import { db } from '../firebase';
 import AIBot from '../components/AIBot';
 
 // Mood options configuration
-const MOODS = [
+const DEFAULT_MOODS = [
   { emoji: '😊', label: 'Happy', color: 'bg-green-100 border-green-200' },
   { emoji: '😌', label: 'Calm', color: 'bg-blue-100 border-blue-200' },
   { emoji: '😔', label: 'Sad', color: 'bg-indigo-100 border-indigo-200' },
@@ -31,6 +31,13 @@ const MoodTracker = () => {
   const [showAllEntries, setShowAllEntries] = useState(false);
 
   const [topMood, setTopMood] = useState(null);
+
+  // Custom Mood
+  const [moods, setMoods] = useState(DEFAULT_MOODS);
+  const [customEmoji, setCustomEmoji] = useState('');
+  const [customLabel, setCustomLabel] = useState('');
+  const [customError, setCustomError] = useState('');
+  const [showCustomSuccess, setShowCustomSuccess] = useState(false);
 
   useEffect(() => {
     if (!entries || entries.length === 0) {
@@ -60,7 +67,7 @@ const MoodTracker = () => {
         maxLabel = label;
       }
     });
-    const moodObj = MOODS.find(m => m.label === maxLabel);
+    const moodObj = moods.find(m => m.label === maxLabel);
     setTopMood(moodObj ? { ...moodObj, count: max } : null);
   }, [entries]);
 
@@ -301,7 +308,7 @@ const MoodTracker = () => {
           <div>
             <label className="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-3">Select Mood</label>
             <div className="flex gap-2 overflow-x-auto pb-2 hide-scrollbar">
-              {MOODS.map((m) => (
+              {moods.map((m) => (
                 <button
                   key={m.label}
                   onClick={() => handleMoodSelect(m)}
@@ -315,6 +322,64 @@ const MoodTracker = () => {
                   <span className="text-2xl mb-1">{m.emoji}</span>
                 </button>
               ))}
+            </div>
+
+            {/* Custom Mood Form */}
+            <div className="mt-4 p-3 rounded-xl bg-slate-50 border border-slate-100">
+              <div className="flex items-center gap-2 mb-2">
+                <input
+                  type="text"
+                  value={customEmoji}
+                  onChange={e => setCustomEmoji(e.target.value)}
+                  placeholder="Emoji"
+                  className="w-16 text-2xl p-2 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-purple-100"
+                  maxLength={2}
+                />
+                <input
+                  type="text"
+                  value={customLabel}
+                  onChange={e => setCustomLabel(e.target.value)}
+                  placeholder="Mood label"
+                  className="flex-1 p-2 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-purple-100"
+                  maxLength={16}
+                />
+                <button
+                  onClick={() => {
+                    if (!customEmoji.trim() || !customLabel.trim()) {
+                      setCustomError('Emoji dan label wajib diisi');
+                      return;
+                    }
+                    if (moods.some(m => m.label.toLowerCase() === customLabel.trim().toLowerCase())) {
+                      setCustomError('Label sudah ada');
+                      return;
+                    }
+                    setMoods([...moods, {
+                      emoji: customEmoji.trim(),
+                      label: customLabel.trim(),
+                      color: 'bg-purple-100 border-purple-200',
+                    }]);
+                    setCustomEmoji('');
+                    setCustomLabel('');
+                    setCustomError('');
+                    setShowCustomSuccess(true);
+                    setTimeout(() => setShowCustomSuccess(false), 1500);
+                  }}
+                  className="px-4 py-2 rounded-xl bg-indigo-400 hover:bg-indigo-500 text-white font-semibold text-sm"
+                >
+                  Tambah
+                </button>
+                      {/* Modal sukses custom mood */}
+                      {showCustomSuccess && (
+                        <div className="fixed inset-0 flex items-center justify-center z-50">
+                          <div className="bg-white dark:bg-slate-800 rounded-2xl px-6 py-4 shadow-xl border border-green-200 flex items-center gap-3">
+                            <span className="text-2xl">🎉</span>
+                            <span className="text-green-600 dark:text-green-300 font-semibold">Mood berhasil ditambahkan!</span>
+                          </div>
+                        </div>
+                      )}
+              </div>
+              {customError && <div className="text-xs text-red-500 mt-1">{customError}</div>}
+              <div className="text-xs text-slate-400">Tambah mood sendiri jika mood default kurang sesuai (emoji + label)</div>
             </div>
           </div>
 
