@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Trash2, Sparkles, Calendar, LogOut } from 'lucide-react';
+import { Trash2, Sparkles, Calendar, LogOut, Award, Trophy, Flame } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import { collection, addDoc, query, where, orderBy, onSnapshot, deleteDoc, doc } from 'firebase/firestore';
@@ -39,6 +39,10 @@ const MoodTracker = () => {
   const [customError, setCustomError] = useState('');
   const [showCustomSuccess, setShowCustomSuccess] = useState(false);
 
+  // Achievements
+  const [achievements, setAchievements] = useState([]);
+  const [showBadges, setShowBadges] = useState(false);
+
   useEffect(() => {
     if (!entries || entries.length === 0) {
       setTopMood(null);
@@ -70,6 +74,69 @@ const MoodTracker = () => {
     const moodObj = moods.find(m => m.label === maxLabel);
     setTopMood(moodObj ? { ...moodObj, count: max } : null);
   }, [entries]);
+
+  // Hitung achievements
+  useEffect(() => {
+    if (!entries || entries.length === 0) {
+      setAchievements([]);
+      return;
+    }
+
+    const badges = [];
+
+    // Hitung streak (hari berturut-turut)
+    const sortedEntries = [...entries].sort((a, b) => {
+      const dateA = a.timestamp?.toDate ? a.timestamp.toDate() : new Date(a.timestamp);
+      const dateB = b.timestamp?.toDate ? b.timestamp.toDate() : new Date(b.timestamp);
+      return dateB - dateA;
+    });
+
+    let streak = 0;
+    let currentDate = new Date();
+    currentDate.setHours(0, 0, 0, 0);
+
+    for (let i = 0; i < sortedEntries.length; i++) {
+      const entryDate = sortedEntries[i].timestamp?.toDate ? sortedEntries[i].timestamp.toDate() : new Date(sortedEntries[i].timestamp);
+      entryDate.setHours(0, 0, 0, 0);
+      
+      const diffDays = Math.floor((currentDate - entryDate) / (1000 * 60 * 60 * 24));
+      
+      if (diffDays === streak) {
+        streak++;
+        currentDate.setDate(currentDate.getDate() - 1);
+      } else {
+        break;
+      }
+    }
+
+    // Badge Streak
+    if (streak >= 3) badges.push({ icon: '🔥', label: `${streak} Hari Streak!`, desc: 'Konsisten mengisi mood', color: 'bg-orange-100 text-orange-600' });
+    if (streak >= 7) badges.push({ icon: '⚡', label: 'Semangat 7 Hari!', desc: 'Streak 7 hari berturut', color: 'bg-yellow-100 text-yellow-600' });
+    if (streak >= 30) badges.push({ icon: '🏆', label: 'Champion 30 Hari!', desc: 'Luar biasa!', color: 'bg-purple-100 text-purple-600' });
+
+    // Badge Total Entries
+    if (entries.length >= 10) badges.push({ icon: '📝', label: 'Mood Master', desc: '10+ mood entries', color: 'bg-blue-100 text-blue-600' });
+    if (entries.length >= 50) badges.push({ icon: '🎯', label: 'Mood Expert', desc: '50+ mood entries', color: 'bg-indigo-100 text-indigo-600' });
+    if (entries.length >= 100) badges.push({ icon: '💎', label: 'Mood Legend', desc: '100+ mood entries', color: 'bg-cyan-100 text-cyan-600' });
+
+    // Badge Mood terbanyak
+    const moodCounts = {};
+    entries.forEach(e => {
+      const label = e.mood?.label;
+      if (label) moodCounts[label] = (moodCounts[label] || 0) + 1;
+    });
+
+    Object.entries(moodCounts).forEach(([label, count]) => {
+      if (count >= 10) {
+        const mood = moods.find(m => m.label === label);
+        if (mood) {
+          badges.push({ icon: mood.emoji, label: `${label} King`, desc: `${count}x ${label}`, color: 'bg-pink-100 text-pink-600' });
+        }
+      }
+    });
+
+    setAchievements(badges);
+  }, [entries, moods]);
 
   // --- Effects ---
   useEffect(() => {
@@ -285,6 +352,18 @@ const MoodTracker = () => {
           </div>
           <h1 className="text-4xl font-bold text-slate-700 tracking-tight">Moodly</h1>
           <p className="text-slate-400 text-sm">How are you feeling today?</p>
+          
+          {/* Badge button */}
+          {achievements.length > 0 && (
+            <button
+              onClick={() => setShowBadges(true)}
+              className="mt-3 inline-flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-yellow-100 to-orange-100 hover:from-yellow-200 hover:to-orange-200 rounded-full text-sm font-semibold text-yellow-700 transition-all shadow-sm"
+            >
+              <Trophy className="w-4 h-4" />
+              {achievements.length} Badge{achievements.length > 1 ? 's' : ''}
+            </button>
+          )}
+          
           {/* Logout button in top right */}
           <div className="absolute top-2 right-2 group">
             <button
@@ -324,7 +403,7 @@ const MoodTracker = () => {
               ))}
             </div>
 
-            {/* Custom Mood Form */}
+            {/* Custom Mood */}
             <div className="mt-4 p-3 rounded-xl bg-slate-50 border border-slate-100">
               <div className="flex items-center gap-2 mb-2">
                 <input
@@ -368,7 +447,7 @@ const MoodTracker = () => {
                 >
                   Tambah
                 </button>
-                      {/* Modal sukses custom mood */}
+                      {/* Modal sukses */}
                       {showCustomSuccess && (
                         <div className="fixed inset-0 flex items-center justify-center z-50">
                           <div className="bg-white dark:bg-slate-800 rounded-2xl px-6 py-4 shadow-xl border border-green-200 flex items-center gap-3">
@@ -476,6 +555,52 @@ const MoodTracker = () => {
             </>
           )}
         </div>
+
+        {/* Modal Achievements/Badges */}
+        {showBadges && (
+          <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4" onClick={() => setShowBadges(false)}>
+            <div className="bg-white dark:bg-slate-800 rounded-3xl w-full max-w-md shadow-xl max-h-[85vh] overflow-y-auto" onClick={e => e.stopPropagation()}>
+              <div className="sticky top-0 bg-white dark:bg-slate-800 rounded-t-3xl px-6 pt-5 pb-4 border-b border-gray-100 dark:border-slate-700">
+                <div className="flex justify-between items-start">
+                  <div>
+                    <h2 className="text-2xl font-bold text-slate-700 dark:text-slate-100 flex items-center gap-2">
+                      <Trophy className="w-6 h-6 text-yellow-500" />
+                      Achievements
+                    </h2>
+                    <p className="text-slate-500 dark:text-slate-300 text-sm mt-1">Badge kamu yang sudah terkumpul</p>
+                  </div>
+                  <button
+                    onClick={() => setShowBadges(false)}
+                    className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 text-3xl leading-none -mt-1"
+                  >
+                    ×
+                  </button>
+                </div>
+              </div>
+              <div className="px-6 py-5 space-y-3">
+                {achievements.length === 0 ? (
+                  <div className="text-center py-10 text-slate-400">
+                    <Award className="w-12 h-12 mx-auto mb-3 opacity-50" />
+                    <p>Belum ada badge. Terus isi mood untuk unlock!</p>
+                  </div>
+                ) : (
+                  achievements.map((badge, idx) => (
+                    <div
+                      key={idx}
+                      className={`flex items-center gap-4 p-4 rounded-2xl ${badge.color} transition-all hover:scale-105`}
+                    >
+                      <span className="text-4xl">{badge.icon}</span>
+                      <div className="flex-1">
+                        <h3 className="font-bold text-lg">{badge.label}</h3>
+                        <p className="text-sm opacity-80">{badge.desc}</p>
+                      </div>
+                    </div>
+                  ))
+                )}
+              </div>
+            </div>
+          </div>
+        )}
 
       </div>
     </div>
