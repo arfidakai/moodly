@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Trash2, Sparkles, Calendar, LogOut, Award, Trophy, Flame } from 'lucide-react';
+import { Trash2, Sparkles, Calendar, LogOut, Award, Trophy, Flame, Share2, Copy, Check } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import { collection, addDoc, query, where, orderBy, onSnapshot, deleteDoc, doc } from 'firebase/firestore';
@@ -42,6 +42,10 @@ const MoodTracker = () => {
   // Achievements
   const [achievements, setAchievements] = useState([]);
   const [showBadges, setShowBadges] = useState(false);
+
+  // Share
+  const [showShareMenu, setShowShareMenu] = useState(null);
+  const [copiedId, setCopiedId] = useState(null);
 
   useEffect(() => {
     if (!entries || entries.length === 0) {
@@ -235,6 +239,22 @@ const MoodTracker = () => {
     } catch (error) {
       console.error('Failed to logout:', error);
     }
+  };
+
+  const handleShare = (entry, platform) => {
+    const text = `${entry.mood.emoji} Mood: ${entry.mood.label}\n${entry.note ? entry.note : ''}\n\n#Moodly #MoodTracker`;
+    
+    if (platform === 'twitter') {
+      window.open(`https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}`, '_blank');
+    } else if (platform === 'whatsapp') {
+      window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, '_blank');
+    } else if (platform === 'copy') {
+      navigator.clipboard.writeText(text).then(() => {
+        setCopiedId(entry.id);
+        setTimeout(() => setCopiedId(null), 2000);
+      });
+    }
+    setShowShareMenu(null);
   };
 
   return (
@@ -508,7 +528,7 @@ const MoodTracker = () => {
               {(showAllEntries ? entries : entries.slice(0, 4)).map((entry) => (
                 <div 
                   key={entry.id} 
-                  className="group bg-white p-5 rounded-2xl shadow-sm border border-slate-50 hover:shadow-md transition-all duration-300 flex flex-col gap-3 relative overflow-hidden"
+                  className="group bg-white p-5 rounded-2xl shadow-sm border border-slate-50 hover:shadow-md transition-all duration-300 flex flex-col gap-3 relative"
                 >
                   {/* Decorative side bar based on mood color */}
                   <div className={`absolute left-0 top-0 bottom-0 w-1.5 ${entry.mood.color.split(' ')[0]}`}></div>
@@ -525,12 +545,51 @@ const MoodTracker = () => {
                       </div>
                     </div>
                     
-                    <button 
-                      onClick={() => handleDelete(entry.id)}
-                      className="text-slate-300 hover:text-red-400 transition-colors p-2"
-                    >
-                      <Trash2 className="w-4 h-4" />
-                    </button>
+                    <div className="flex gap-1 relative">
+                      {/* Share button */}
+                      <button 
+                        onClick={() => setShowShareMenu(showShareMenu === entry.id ? null : entry.id)}
+                        className="text-slate-300 hover:text-indigo-400 transition-colors p-2"
+                      >
+                        <Share2 className="w-4 h-4" />
+                      </button>
+                      
+                      {/* Share menu dropdown */}
+                      {showShareMenu === entry.id && (
+                        <div className="absolute right-0 top-10 bg-white dark:bg-slate-800 rounded-xl shadow-lg border border-slate-100 dark:border-slate-700 py-2 z-10 min-w-[160px]">
+                          <button
+                            onClick={() => handleShare(entry, 'twitter')}
+                            className="w-full px-4 py-2 text-left text-sm hover:bg-slate-50 dark:hover:bg-slate-700 flex items-center gap-2 text-slate-700 dark:text-slate-200"
+                          >
+                            <span>🐦</span> Share ke Twitter
+                          </button>
+                          <button
+                            onClick={() => handleShare(entry, 'whatsapp')}
+                            className="w-full px-4 py-2 text-left text-sm hover:bg-slate-50 dark:hover:bg-slate-700 flex items-center gap-2 text-slate-700 dark:text-slate-200"
+                          >
+                            <span>💬</span> Share ke WhatsApp
+                          </button>
+                          <button
+                            onClick={() => handleShare(entry, 'copy')}
+                            className="w-full px-4 py-2 text-left text-sm hover:bg-slate-50 dark:hover:bg-slate-700 flex items-center gap-2 text-slate-700 dark:text-slate-200"
+                          >
+                            {copiedId === entry.id ? (
+                              <><Check className="w-4 h-4" /> Tersalin!</>
+                            ) : (
+                              <><Copy className="w-4 h-4" /> Copy Text</>
+                            )}
+                          </button>
+                        </div>
+                      )}
+                      
+                      {/* Delete button */}
+                      <button 
+                        onClick={() => handleDelete(entry.id)}
+                        className="text-slate-300 hover:text-red-400 transition-colors p-2"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </button>
+                    </div>
                   </div>
 
                   {entry.note && (
