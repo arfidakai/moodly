@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Trash2, Sparkles, Calendar, LogOut, Award, Trophy, Flame, Share2, Copy, Check } from 'lucide-react';
+import { Trash2, Sparkles, Calendar, LogOut, Award, Trophy, Flame, Share2, Copy, Check, ChevronLeft, ChevronRight } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import { collection, addDoc, query, where, orderBy, onSnapshot, deleteDoc, doc } from 'firebase/firestore';
@@ -46,6 +46,11 @@ const MoodTracker = () => {
   // Share
   const [showShareMenu, setShowShareMenu] = useState(null);
   const [copiedId, setCopiedId] = useState(null);
+
+  // Calendar
+  const [showCalendar, setShowCalendar] = useState(false);
+  const [calendarMonth, setCalendarMonth] = useState(new Date());
+  const [moodByDate, setMoodByDate] = useState({});
 
   useEffect(() => {
     if (!entries || entries.length === 0) {
@@ -141,6 +146,19 @@ const MoodTracker = () => {
 
     setAchievements(badges);
   }, [entries, moods]);
+
+  // Build mood map by date
+  useEffect(() => {
+    const map = {};
+    entries.forEach(entry => {
+      const date = entry.timestamp?.toDate ? entry.timestamp.toDate() : new Date(entry.timestamp);
+      const dateKey = `${date.getFullYear()}-${date.getMonth()}-${date.getDate()}`;
+      if (!map[dateKey] || new Date(entry.timestamp) > new Date(map[dateKey].timestamp)) {
+        map[dateKey] = entry;
+      }
+    });
+    setMoodByDate(map);
+  }, [entries]);
 
   // --- Effects ---
   useEffect(() => {
@@ -255,6 +273,35 @@ const MoodTracker = () => {
       });
     }
     setShowShareMenu(null);
+  };
+
+  const getDaysInMonth = (date) => {
+    return new Date(date.getFullYear(), date.getMonth() + 1, 0).getDate();
+  };
+
+  const getFirstDayOfMonth = (date) => {
+    return new Date(date.getFullYear(), date.getMonth(), 1).getDay();
+  };
+
+  const getMoodForDate = (day) => {
+    const dateKey = `${calendarMonth.getFullYear()}-${calendarMonth.getMonth()}-${day}`;
+    return moodByDate[dateKey];
+  };
+
+  const renderCalendar = () => {
+    const daysInMonth = getDaysInMonth(calendarMonth);
+    const firstDay = getFirstDayOfMonth(calendarMonth);
+    const days = [];
+
+    for (let i = 0; i < firstDay; i++) {
+      days.push(null);
+    }
+
+    for (let day = 1; day <= daysInMonth; day++) {
+      days.push(day);
+    }
+
+    return days;
   };
 
   return (
@@ -373,16 +420,27 @@ const MoodTracker = () => {
           <h1 className="text-4xl font-bold text-slate-700 tracking-tight">Moodly</h1>
           <p className="text-slate-400 text-sm">How are you feeling today?</p>
           
-          {/* Badge button */}
-          {achievements.length > 0 && (
+          <div className="flex gap-2 justify-center flex-wrap">
+            {/* Calendar button */}
             <button
-              onClick={() => setShowBadges(true)}
-              className="mt-3 inline-flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-yellow-100 to-orange-100 hover:from-yellow-200 hover:to-orange-200 rounded-full text-sm font-semibold text-yellow-700 transition-all shadow-sm"
+              onClick={() => setShowCalendar(true)}
+              className="mt-3 inline-flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-blue-100 to-cyan-100 hover:from-blue-200 hover:to-cyan-200 rounded-full text-sm font-semibold text-blue-700 transition-all shadow-sm"
             >
-              <Trophy className="w-4 h-4" />
-              {achievements.length} Badge{achievements.length > 1 ? 's' : ''}
+              <Calendar className="w-4 h-4" />
+              Kalender
             </button>
-          )}
+
+            {/* Badge button */}
+            {achievements.length > 0 && (
+              <button
+                onClick={() => setShowBadges(true)}
+                className="mt-3 inline-flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-yellow-100 to-orange-100 hover:from-yellow-200 hover:to-orange-200 rounded-full text-sm font-semibold text-yellow-700 transition-all shadow-sm"
+              >
+                <Trophy className="w-4 h-4" />
+                {achievements.length} Badge{achievements.length > 1 ? 's' : ''}
+              </button>
+            )}
+          </div>
           
           {/* Logout button in top right */}
           <div className="absolute top-2 right-2 group">
@@ -656,6 +714,76 @@ const MoodTracker = () => {
                     </div>
                   ))
                 )}
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Modal Mood Calendar */}
+        {showCalendar && (
+          <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4" onClick={() => setShowCalendar(false)}>
+            <div className="bg-white dark:bg-slate-800 rounded-3xl w-full max-w-lg shadow-xl max-h-[90vh] overflow-y-auto" onClick={e => e.stopPropagation()}>
+              <div className="sticky top-0 bg-white dark:bg-slate-800 rounded-t-3xl px-6 pt-5 pb-4 border-b border-gray-100 dark:border-slate-700">
+                <div className="flex justify-between items-center">
+                  <button
+                    onClick={() => setCalendarMonth(new Date(calendarMonth.getFullYear(), calendarMonth.getMonth() - 1))}
+                    className="p-2 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-lg transition-colors"
+                  >
+                    <ChevronLeft className="w-5 h-5" />
+                  </button>
+                  <h2 className="text-2xl font-bold text-slate-700 dark:text-slate-100">
+                    {calendarMonth.toLocaleDateString('id-ID', { month: 'long', year: 'numeric' })}
+                  </h2>
+                  <button
+                    onClick={() => setCalendarMonth(new Date(calendarMonth.getFullYear(), calendarMonth.getMonth() + 1))}
+                    className="p-2 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-lg transition-colors"
+                  >
+                    <ChevronRight className="w-5 h-5" />
+                  </button>
+                  <button
+                    onClick={() => setShowCalendar(false)}
+                    className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 text-3xl leading-none"
+                  >
+                    ×
+                  </button>
+                </div>
+              </div>
+              <div className="px-6 py-5">
+                {/* Day names */}
+                <div className="grid grid-cols-7 gap-2 mb-4">
+                  {['Min', 'Sen', 'Sel', 'Rab', 'Kam', 'Jum', 'Sab'].map(day => (
+                    <div key={day} className="text-center font-bold text-xs text-slate-500 py-2">
+                      {day}
+                    </div>
+                  ))}
+                </div>
+
+                {/* Calendar days */}
+                <div className="grid grid-cols-7 gap-2">
+                  {renderCalendar().map((day, idx) => {
+                    const mood = day ? getMoodForDate(day) : null;
+                    return (
+                      <div
+                        key={idx}
+                        className={`
+                          aspect-square rounded-lg flex items-center justify-center text-lg font-semibold cursor-pointer transition-all
+                          ${!day ? 'bg-transparent' : mood ? 'bg-slate-50 dark:bg-slate-700 hover:scale-110' : 'bg-slate-50 dark:bg-slate-700 text-slate-300'}
+                        `}
+                        title={mood ? `${mood.mood.label} - ${mood.date}` : ''}
+                      >
+                        {mood ? mood.mood.emoji : day || ''}
+                      </div>
+                    );
+                  })}
+                </div>
+
+                {/* Legend */}
+                <div className="mt-6 p-4 bg-slate-50 dark:bg-slate-700 rounded-lg">
+                  <p className="text-xs font-semibold text-slate-600 dark:text-slate-300 mb-2">Legenda:</p>
+                  <p className="text-xs text-slate-500 dark:text-slate-400">
+                    🟩 Hari dengan mood entry | ⬜ Hari tanpa entry
+                  </p>
+                </div>
               </div>
             </div>
           </div>
