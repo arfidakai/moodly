@@ -487,9 +487,20 @@ const MoodTracker = () => {
                 <input
                   type="text"
                   value={customEmoji}
-                  onChange={e => setCustomEmoji(e.target.value)}
-                  placeholder="Emoji"
-                  className="w-16 text-2xl p-2 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-purple-100"
+                  onChange={e => {
+                    const val = e.target.value;
+                    // Regex untuk detect emoji asli (emoji unicode)
+                    const emojiRegex = /^[\p{Emoji}\p{Emoji_Presentation}\p{Emoji_Modifier}\p{Emoji_Component}]+$/u;
+                    // Hanya set value jika kosong atau valid emoji
+                    if (val === '' || emojiRegex.test(val)) {
+                      setCustomEmoji(val);
+                      setCustomError('');
+                    } else {
+                      setCustomError('Hanya emoji yang diperbolehkan!');
+                    }
+                  }}
+                  placeholder="🎉"
+                  className="w-16 text-xl p-2 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-purple-100 text-center"
                   maxLength={2}
                 />
                 <input
@@ -502,8 +513,14 @@ const MoodTracker = () => {
                 />
                 <button
                   onClick={() => {
+                    const emojiRegex = /^[\p{Emoji}\p{Emoji_Presentation}\p{Emoji_Modifier}\p{Emoji_Component}]+$/u;
+                    
                     if (!customEmoji.trim() || !customLabel.trim()) {
                       setCustomError('Emoji dan label wajib diisi');
+                      return;
+                    }
+                    if (!emojiRegex.test(customEmoji.trim())) {
+                      setCustomError('Input harus berupa emoji asli!');
                       return;
                     }
                     if (moods.some(m => m.label.toLowerCase() === customLabel.trim().toLowerCase())) {
