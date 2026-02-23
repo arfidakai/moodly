@@ -29,7 +29,7 @@ function App() {
       <AuthProvider>
         <button
           onClick={() => setDarkMode(d => !d)}
-          className="fixed top-4 right-4 z-50 px-4 py-2 rounded-xl shadow bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-100 font-semibold text-xs hover:bg-slate-300 dark:hover:bg-slate-600 transition-colors"
+          className="fixed top-4 left-4 z-50 px-4 py-2 rounded-xl shadow bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-100 font-semibold text-xs hover:bg-slate-300 dark:hover:bg-slate-600 transition-colors"
           aria-label="Toggle dark mode"
         >
           {darkMode ? '☀️ Light' : '🌙 Dark'}
